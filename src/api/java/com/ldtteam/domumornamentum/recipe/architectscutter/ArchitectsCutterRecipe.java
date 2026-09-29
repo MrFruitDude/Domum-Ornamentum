@@ -22,6 +22,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -153,7 +154,6 @@ public class ArchitectsCutterRecipe implements Recipe<ArchitectsCutterRecipeInpu
         return "";
     }
 
-    @Override
     public @NotNull ItemStack getResultItem(final HolderLookup.Provider provider)
     {
         final Block generatedBlock = getBlock();
@@ -182,13 +182,28 @@ public class ArchitectsCutterRecipe implements Recipe<ArchitectsCutterRecipeInpu
     @Override
     public PlacementInfo placementInfo()
     {
-        return null;
+        // Architect's Cutter recipes are handled by the machine container and
+        // MineColonies' dedicated crafting type. They do not describe a
+        // vanilla recipe-book placement contract, so exposing block-tag inputs
+        // here would be both incomplete (tags are not guaranteed to be bound
+        // while the recipe manager validates recipes) and misleading to the
+        // generic crafting projection.
+        return PlacementInfo.NOT_PLACEABLE;
+    }
+
+    @Override
+    public boolean isSpecial()
+    {
+        // Keep these dynamic, machine-only recipes out of the vanilla recipe
+        // placement/recipe-book validation path. The Architect's Cutter
+        // container and JEI category perform the real component matching.
+        return true;
     }
 
     @Override
     public RecipeBookCategory recipeBookCategory()
     {
-        return null;
+        return RecipeBookCategories.CRAFTING_MISC;
     }
 
     public @NotNull DataComponentPatch getComponentPatch()
