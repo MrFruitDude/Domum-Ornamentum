@@ -1,5 +1,7 @@
 package com.ldtteam.domumornamentum.event.handlers;
 
+import net.minecraft.core.RegistrySetBuilder;
+import net.minecraft.core.registries.Registries;
 import com.ldtteam.domumornamentum.datagen.DatagenContext;
 import com.ldtteam.domumornamentum.datagen.allbrick.AllBrickBlockStateProvider;
 import com.ldtteam.domumornamentum.datagen.DatagenContext;
@@ -110,23 +112,21 @@ public class ModBusEventHandler
     {
         //Extra blocks
         event.getGenerator().addProvider(true, new ExtraBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new DomumRecipeProvider.Runner<>(event.getGenerator().getPackOutput(), event.getLookupProvider(), "Extra Blocks Recipe Provider", ExtraRecipeProvider::new));
-        final ExtraBlockTagProvider extraBlockTagProvider = new ExtraBlockTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext());
+        final ExtraBlockTagProvider extraBlockTagProvider = new ExtraBlockTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext());
         event.getGenerator().addProvider(true, extraBlockTagProvider);
-        event.getGenerator().addProvider(true, new ExtraItemTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), extraBlockTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new ExtraItemTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), extraBlockTagProvider.contentsGetter(), new DatagenContext()));
 
         //Brick blocks
         event.getGenerator().addProvider(true, new BrickBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new DomumRecipeProvider.Runner<>(event.getGenerator().getPackOutput(), event.getLookupProvider(), "Brick Blocks Recipe Provider", BrickRecipeProvider::new));
-        final BrickBlockTagProvider brickBlockTagProvider = new BrickBlockTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext());
+        final BrickBlockTagProvider brickBlockTagProvider = new BrickBlockTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext());
         event.getGenerator().addProvider(true, brickBlockTagProvider);
-        event.getGenerator().addProvider(true, new BrickItemTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), brickBlockTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new BrickItemTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), brickBlockTagProvider.contentsGetter(), new DatagenContext()));
 
         final CompletableFuture<TagsProvider.TagLookup<Block>> globalTagParent = extraBlockTagProvider.contentsGetter().thenCombine(
             brickBlockTagProvider.contentsGetter(),
             (extraTags, brickTags) -> key -> extraTags.apply(key).or(() -> brickTags.apply(key))
         );
-        final GlobalTagProvider globalTagProvider = new GlobalTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagParent, new DatagenContext());
+        final GlobalTagProvider globalTagProvider = new GlobalTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagParent, new DatagenContext());
         event.getGenerator().addProvider(true, globalTagProvider);
         final CompletableFuture<TagsProvider.TagLookup<Block>> globalAndBaseTagParent = globalTagProvider.contentsGetter().thenCombine(
             globalTagParent,
@@ -135,103 +135,110 @@ public class ModBusEventHandler
 
         // Timber Frames
         event.getGenerator().addProvider(true, new TimberFramesBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new TimberFramesComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new TimberFramesComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
 
         //Dynamic Timber Frames
         event.getGenerator().addProvider(true, new DynamicTimberFramesBlockStateProvider(event.getGenerator(), new DatagenContext()));
 
         // Framed Light
         event.getGenerator().addProvider(true, new FramedLightBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FramedLightComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FramedLightComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Shingles
         event.getGenerator().addProvider(true, new ShinglesBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        final ShinglesComponentTagProvider shinglesComponentTagProvider = new ShinglesComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
+        final ShinglesComponentTagProvider shinglesComponentTagProvider = new ShinglesComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
         event.getGenerator().addProvider(true, shinglesComponentTagProvider);
 
         //ShingleSlab
         event.getGenerator().addProvider(true, new ShingleSlabBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new ShingleSlabComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), shinglesComponentTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new ShingleSlabComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), shinglesComponentTagProvider.contentsGetter(), new DatagenContext()));
 
         //Paper wall
         event.getGenerator().addProvider(true, new PaperwallBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new PaperwallComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new PaperwallComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
 
         //Fence
         event.getGenerator().addProvider(true, new FenceBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        final FenceComponentTagProvider fenceComponentTagProvider = new FenceComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
+        final FenceComponentTagProvider fenceComponentTagProvider = new FenceComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
         event.getGenerator().addProvider(true, fenceComponentTagProvider);
-        event.getGenerator().addProvider(true, new FenceCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FenceCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //FenceGate
         event.getGenerator().addProvider(true, new FenceGateBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FenceGateComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), fenceComponentTagProvider.contentsGetter(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FenceGateCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FenceGateComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), fenceComponentTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FenceGateCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Slab
         event.getGenerator().addProvider(true, new SlabBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new SlabComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
-        event.getGenerator().addProvider(true, new SlabCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new SlabComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
+        event.getGenerator().addProvider(true, new SlabCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Wall
         event.getGenerator().addProvider(true, new WallBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new WallComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
-        event.getGenerator().addProvider(true, new WallCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new WallComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
+        event.getGenerator().addProvider(true, new WallCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Stair
         event.getGenerator().addProvider(true, new StairsBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new StairsComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
-        event.getGenerator().addProvider(true, new StairsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new StairsComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
+        event.getGenerator().addProvider(true, new StairsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Trapdoor
         event.getGenerator().addProvider(true, new TrapdoorsBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        final TrapdoorsComponentTagProvider trapdoorsComponentTagProvider = new TrapdoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
+        final TrapdoorsComponentTagProvider trapdoorsComponentTagProvider = new TrapdoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
         event.getGenerator().addProvider(true, trapdoorsComponentTagProvider);
-        event.getGenerator().addProvider(true, new TrapdoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new TrapdoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         event.getGenerator().addProvider(true, new PanelBlockStateProvider(event.getGenerator(), new DatagenContext()));
 
         //Post
         event.getGenerator().addProvider(true, new PostBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new PostComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new PostComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
 
 
         //Fancy Trapdoor
         event.getGenerator().addProvider(true, new FancyTrapdoorsBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FancyTrapdoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), trapdoorsComponentTagProvider.contentsGetter(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FancyTrapdoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FancyTrapdoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), trapdoorsComponentTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FancyTrapdoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Door
         event.getGenerator().addProvider(true, new DoorsBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        final DoorsComponentTagProvider doorsComponentTagProvider = new DoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
+        final DoorsComponentTagProvider doorsComponentTagProvider = new DoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext());
         event.getGenerator().addProvider(true, doorsComponentTagProvider);
         // Commented to temporarily prevent the tag generation issue for doors
-        //event.getGenerator().addProvider(true, new DoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        //event.getGenerator().addProvider(true, new DoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //FancyDoor
         event.getGenerator().addProvider(true, new FancyDoorsBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FancyDoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), doorsComponentTagProvider.contentsGetter(), new DatagenContext()));
-        //event.getGenerator().addProvider(true, new FancyDoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new FancyDoorsComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), doorsComponentTagProvider.contentsGetter(), new DatagenContext()));
+        //event.getGenerator().addProvider(true, new FancyDoorsCompatibilityTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Floating carpets
         event.getGenerator().addProvider(true, new FloatingCarpetBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new FloatingCarpetBlockTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new DomumRecipeProvider.Runner<>(event.getGenerator().getPackOutput(), event.getLookupProvider(), "Floating Carpet Recipe Provider", FloatingCarpetRecipeProvider::new));
+        event.getGenerator().addProvider(true, new FloatingCarpetBlockTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), new DatagenContext()));
 
         //Pillars
         event.getGenerator().addProvider(true, new PillarBlockStateProvider(event.getGenerator(), new DatagenContext()));
-        event.getGenerator().addProvider(true, new PillarComponentTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
+        event.getGenerator().addProvider(true, new PillarComponentTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalTagProvider.contentsGetter(), new DatagenContext()));
 
         //AllBrick
         event.getGenerator().addProvider(true, new AllBrickBlockStateProvider(event.getGenerator(), new DatagenContext()));
         event.getGenerator().addProvider(true, new AllBrickStairBlockStateProvider(event.getGenerator(), new DatagenContext()));
 
-        event.getGenerator().addProvider(true, new AllBrickBlockTagProvider(event.getGenerator().getPackOutput(), event.getLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
+        event.getGenerator().addProvider(true, new AllBrickBlockTagProvider(event.getGenerator().getPackOutput(), event.getReloadableLookupProvider(), globalAndBaseTagParent, new DatagenContext()));
 
         //Global
-        event.getGenerator().addProvider(true, new DomumRecipeProvider.Runner<>(event.getGenerator().getPackOutput(), event.getLookupProvider(), "Global Blocks Recipe Provider", GlobalRecipeProvider::new));
         event.getGenerator().addProvider(true, new GlobalLanguageProvider(event.getGenerator()));
-        event.getGenerator().addProvider(true, new GlobalLootTableProvider(event.getGenerator().getPackOutput(), event.getLookupProvider()));
-        event.getGenerator().addProvider(true, new DomumRecipeProvider.Runner<>(event.getGenerator().getPackOutput(), event.getLookupProvider(), "Materially textured block recipes", MateriallyTexturedBlockRecipeProvider::new));
+
+        // MC 26.3: recipes, recipe advancements and loot tables are reloadable registry
+        // entries; they are generated through one RegistrySetBuilder bootstrap.
+        final RegistrySetBuilder reloadable = new RegistrySetBuilder()
+            .add(Registries.LOOT_TABLE, new GlobalLootTableProvider())
+            .add(DomumRecipeProvider.bootstrap(ExtraRecipeProvider::new))
+            .add(DomumRecipeProvider.bootstrap(BrickRecipeProvider::new))
+            .add(DomumRecipeProvider.bootstrap(FloatingCarpetRecipeProvider::new))
+            .add(DomumRecipeProvider.bootstrap(GlobalRecipeProvider::new))
+            .add(DomumRecipeProvider.bootstrap(MateriallyTexturedBlockRecipeProvider::new));
+        event.createReloadableRegistryObjects(reloadable);
     }
 }

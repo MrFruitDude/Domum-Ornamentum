@@ -5,19 +5,17 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "functions": [
-            {
-              "function": "minecraft:copy_components",
-              "include": [
-                "domum_ornamentum:texture_data"
-              ],
-              "source": "block_entity"
-            }
-          ],
+          "modifier": {
+            "type": "minecraft:copy_components",
+            "include": [
+              "domum_ornamentum:texture_data"
+            ],
+            "source": "block_entity"
+          },
           "name": "domum_ornamentum:four_light"
         }
       ],
-      "rolls": 1.0
+      "rolls": 1
     }
   ],
   "random_sequence": "domum_ornamentum:blocks/four_light"

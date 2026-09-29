@@ -11,9 +11,9 @@ import com.ldtteam.domumornamentum.block.vanilla.TrapdoorBlock;
 import com.ldtteam.domumornamentum.component.ModDataComponents;
 import com.ldtteam.domumornamentum.shingles.ShingleHeightType;
 import net.minecraft.advancements.predicates.StatePropertiesPredicate;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.loot.BlockLootSubProvider;
+import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SlabBlock;
@@ -24,12 +24,12 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
-import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.entries.UniformContainerBase;
 import net.minecraft.world.level.storage.loot.functions.CopyBlockState;
 import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
-import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.predicates.MatchBlock;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
@@ -38,9 +38,9 @@ import java.util.function.UnaryOperator;
  */
 public class MaterialLootTableProvider extends BlockLootSubProvider
 {
-    public MaterialLootTableProvider(final HolderLookup.Provider registries)
+    public MaterialLootTableProvider(final LootTableSubProvider.Context context)
     {
-        super(Set.of(), FeatureFlags.REGISTRY.allFlags(), registries);
+        super(Set.of(), FeatureFlags.REGISTRY.allFlags(), context);
     }
 
     @Override
@@ -83,12 +83,12 @@ public class MaterialLootTableProvider extends BlockLootSubProvider
     /**
      * Helper method to create default textureData lootTable
      */
-    protected void dropSelfMaterially(final Block block, final UnaryOperator<LootPoolSingletonContainer.Builder<?>> itemPoolBuilder)
+    protected void dropSelfMaterially(final Block block, final UnaryOperator<UniformContainerBase.Builder<?>> itemPoolBuilder)
     {
         add(block,
             LootTable.lootTable()
                 .withPool(LootPool.lootPool()
-                    .setRolls(ConstantValue.exactly(1))
+                    .setRolls(ContextIntProviders.exactly(1))
                     .add(itemPoolBuilder.apply(LootItem.lootTableItem(block)
                         .apply(CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
                             .include(ModDataComponents.TEXTURE_DATA.get()))))));
@@ -120,8 +120,8 @@ public class MaterialLootTableProvider extends BlockLootSubProvider
     {
         dropSelfMaterially(block,
             item -> item.apply(CopyBlockState.copyState(block).copy(property))
-                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
-                    .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(DoorBlock.HALF, DoubleBlockHalf.LOWER))));
+                .when(MatchBlock.blockMatches(this.blocks, block,
+                    StatePropertiesPredicate.Builder.properties().hasProperty(DoorBlock.HALF, DoubleBlockHalf.LOWER))));
     }
 
     /**
@@ -130,8 +130,8 @@ public class MaterialLootTableProvider extends BlockLootSubProvider
     protected void dropSlabMaterially(final SlabBlock block)
     {
         dropSelfMaterially(block,
-            item -> item.apply(SetItemCountFunction.setCount(ConstantValue.exactly(2.0F))
-                .when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
-                    .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(SlabBlock.TYPE, SlabType.DOUBLE)))));
+            item -> item.apply(SetItemCountFunction.setCount(ContextIntProviders.exactly(2))
+                .when(MatchBlock.blockMatches(this.blocks, block,
+                    StatePropertiesPredicate.Builder.properties().hasProperty(SlabBlock.TYPE, SlabType.DOUBLE)))));
     }
 }

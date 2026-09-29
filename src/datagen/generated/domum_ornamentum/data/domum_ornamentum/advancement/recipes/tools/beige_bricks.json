@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:beige_bricks"
+        "recipes": "domum_ornamentum:beige_bricks"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

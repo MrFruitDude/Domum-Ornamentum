@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:mossy_cobblestone_extra"
+        "recipes": "domum_ornamentum:mossy_cobblestone_extra"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

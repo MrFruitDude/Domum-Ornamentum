@@ -5,17 +5,17 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "functions": [
+          "modifier": [
             {
-              "function": "minecraft:copy_components",
+              "type": "minecraft:copy_components",
               "include": [
                 "domum_ornamentum:texture_data"
               ],
               "source": "block_entity"
             },
             {
+              "type": "minecraft:copy_state",
               "block": "domum_ornamentum:vanilla_trapdoors_compat",
-              "function": "minecraft:copy_state",
               "properties": [
                 "type"
               ]
@@ -24,7 +24,7 @@
           "name": "domum_ornamentum:vanilla_trapdoors_compat"
         }
       ],
-      "rolls": 1.0
+      "rolls": 1
     }
   ],
   "random_sequence": "domum_ornamentum:blocks/vanilla_trapdoors_compat"

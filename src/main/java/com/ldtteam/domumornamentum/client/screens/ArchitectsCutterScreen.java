@@ -446,4 +446,16 @@ public class ArchitectsCutterScreen extends AbstractContainerScreen<ArchitectsCu
     protected int getHiddenTypeRows() {
         return (ModBlocks.getInstance().getOrComputeItemGroups().size() + 10 - 1) / 10 - 1;
     }
+
+    /** MC 26.3: NeoForge dropped AbstractContainerScreen#getGuiLeft/getGuiTop; exposed for the JEI ghost-ingredient handler. */
+    public int getGuiLeft()
+    {
+        return this.leftPos;
+    }
+
+    /** @see #getGuiLeft() */
+    public int getGuiTop()
+    {
+        return this.topPos;
+    }
 }

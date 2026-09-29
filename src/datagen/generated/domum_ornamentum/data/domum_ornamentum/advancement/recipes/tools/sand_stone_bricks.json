@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:sand_stone_bricks"
+        "recipes": "domum_ornamentum:sand_stone_bricks"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

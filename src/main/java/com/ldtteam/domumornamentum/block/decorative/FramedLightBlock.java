@@ -72,7 +72,7 @@ public class FramedLightBlock extends AbstractBlock<FramedLightBlock> implements
      */
     public FramedLightBlock(final FramedLightType framedLightType, final BlockBehaviour.Properties props)
     {
-        super(props.mapColor(MapColor.WOOD).pushReaction(PushReaction.PUSH_ONLY).strength(BLOCK_HARDNESS, RESISTANCE).noOcclusion().lightLevel(state -> 15));
+        super(props.mapColor(MapColor.WOOD).pushReaction(PushReaction.PUSH).strength(BLOCK_HARDNESS, RESISTANCE).noOcclusion().lightLevel(state -> 15));
         this.framedLightType = framedLightType;
     }
 

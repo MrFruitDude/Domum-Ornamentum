@@ -33,7 +33,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:architectscutter"
+        "recipes": "domum_ornamentum:architectscutter"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

@@ -92,7 +92,7 @@ public class ArchitectsCutterRecipeBuilder
         }
 
         final Advancement.Builder advancement = output.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(recipeKey))
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(output.lookup(Registries.RECIPE).getOrThrow(recipeKey)))
             .rewards(AdvancementRewards.Builder.recipe(recipeKey))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement::addCriterion);

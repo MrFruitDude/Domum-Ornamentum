@@ -13,7 +13,6 @@ import com.ldtteam.domumornamentum.recipe.architectscutter.ArchitectsCutterRecip
 import com.ldtteam.domumornamentum.tag.ModTags;
 import com.ldtteam.domumornamentum.util.BlockUtils;
 import com.ldtteam.domumornamentum.util.Constants;
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -47,7 +46,6 @@ import static net.minecraft.world.level.block.Blocks.OAK_PLANKS;
 
 public class PanelBlock extends AbstractPanelBlockTrapdoor<PanelBlock> implements IMateriallyTexturedBlock, ICachedItemGroupBlock, EntityBlock
 {
-    public static final MapCodec<PanelBlock> CODEC = simpleCodec(PanelBlock::new);
     public static final EnumProperty<TrapdoorType>              TYPE       = EnumProperty.create(Constants.TYPE_BLOCK_PROPERTY, TrapdoorType.class);
     public static final List<IMateriallyTexturedBlockComponent> COMPONENTS = ImmutableList.<IMateriallyTexturedBlockComponent>builder()
                                                                                .add(new SimpleRetexturableComponent(Identifier.withDefaultNamespace("block/oak_planks"), ModTags.TRAPDOORS_MATERIALS, OAK_PLANKS))
@@ -61,11 +59,6 @@ public class PanelBlock extends AbstractPanelBlockTrapdoor<PanelBlock> implement
         this.registerDefaultState(this.defaultBlockState().setValue(TYPE, TrapdoorType.FULL));
     }
 
-    @Override
-    protected MapCodec<PanelBlock> codec()
-    {
-        return CODEC;
-    }
 
     @Override
     protected void createBlockStateDefinition(final StateDefinition.@NotNull Builder<Block, BlockState> builder)

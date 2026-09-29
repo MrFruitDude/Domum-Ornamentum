@@ -2,7 +2,6 @@ package com.ldtteam.domumornamentum.client.render;
 
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import java.util.function.Supplier;
@@ -33,14 +32,12 @@ public enum ModRenderTypes {
         return RenderType.create(name, RenderSetup.builder(RenderPipelines.LINES_TRANSLUCENT)
             
             .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-            .setOutputTarget(OutputTarget.MAIN_TARGET)
             .createRenderSetup());
     }
 
     private static RenderType translucentBlock(final String name) {
         return RenderType.create(name, RenderSetup.builder(RenderPipelines.TRANSLUCENT_BLOCK)
             
-            .setOutputTarget(OutputTarget.MAIN_TARGET)
             .createRenderSetup());
     }
 

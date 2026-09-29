@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:green_brick_extra"
+        "recipes": "domum_ornamentum:green_brick_extra"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

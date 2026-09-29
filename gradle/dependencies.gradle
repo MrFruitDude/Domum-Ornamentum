@@ -4,8 +4,8 @@ repositories {
 }
 
 dependencies {
-    implementation "mezz.jei:jei-26.2-common-api:30.25.0.177"
-    compileOnly "mezz.jei:jei-26.2-neoforge-api:30.25.0.177"
+    implementation "mezz.jei:jei-26.3-common-api:31.8.0.48"
+    compileOnly "mezz.jei:jei-26.3-neoforge-api:31.8.0.48"
 
 }
 

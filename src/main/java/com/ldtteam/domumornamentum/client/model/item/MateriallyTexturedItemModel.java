@@ -22,6 +22,7 @@ import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.ItemQuads;
 import net.minecraft.client.resources.model.geometry.QuadCollection;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.client.resources.model.sprite.TextureSlots;
@@ -68,6 +69,8 @@ public final class MateriallyTexturedItemModel implements ItemModel
     private final ModelRenderProperties properties;
     private final Matrix4fc transformation;
     private final ConcurrentMap<MaterialTextureData, QuadCollection> retexturedQuads = new ConcurrentHashMap<>();
+    /** MC 26.3: item layers take pre-split (solid/translucent) quads; cache the split per quad collection. */
+    private final ConcurrentMap<QuadCollection, ItemQuads> itemQuads = new ConcurrentHashMap<>();
     private final ConcurrentMap<Block, TargetTextures> targetTextures = new ConcurrentHashMap<>();
 
     private MateriallyTexturedItemModel(
@@ -149,7 +152,7 @@ public final class MateriallyTexturedItemModel implements ItemModel
         {
             remapParticleMaterial(layer, textureData);
         }
-        layer.prepareQuadList().addAll(quads.getAll());
+        layer.setQuads(this.itemQuads.computeIfAbsent(quads, q -> ItemQuads.split(q.getAll())));
         if (quads.hasMaterialFlag(BakedQuad.FLAG_ANIMATED))
         {
             output.setAnimated();
@@ -221,9 +224,9 @@ public final class MateriallyTexturedItemModel implements ItemModel
         final BakedQuad.MaterialInfo targetInfo = targetSprite.quad().materialInfo();
         return new MutableQuad()
             .setFrom(source)
-            .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType())
+            .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
             .setTintIndex(targetInfo.tintIndex())
-            .setShade(targetInfo.shade())
+            .setShadeOverride(targetInfo.shadeDirectionOverride())
             .setLightEmission(targetInfo.lightEmission())
             .setAmbientOcclusion(targetInfo.ambientOcclusion())
             .toBakedQuad();

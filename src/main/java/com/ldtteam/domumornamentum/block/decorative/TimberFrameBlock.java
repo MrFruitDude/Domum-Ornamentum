@@ -82,7 +82,7 @@ public class TimberFrameBlock extends AbstractBlock<TimberFrameBlock> implements
      */
     public TimberFrameBlock(final TimberFrameType timberFrameType, final BlockBehaviour.Properties props)
     {
-        super(props.mapColor(MapColor.WOOD).pushReaction(PushReaction.PUSH_ONLY).strength(BLOCK_HARDNESS, RESISTANCE).noOcclusion());
+        super(props.mapColor(MapColor.WOOD).pushReaction(PushReaction.PUSH).strength(BLOCK_HARDNESS, RESISTANCE).noOcclusion());
         this.timberFrameType = timberFrameType;
     }
 

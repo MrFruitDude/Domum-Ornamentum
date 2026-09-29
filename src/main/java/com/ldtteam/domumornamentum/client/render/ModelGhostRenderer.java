@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.renderpearl.api.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -125,7 +125,7 @@ public final class ModelGhostRenderer {
     private static final class BufferBuilderTransparent extends BufferBuilder {
         private final float alphaScale;
 
-        private BufferBuilderTransparent(ByteBufferBuilder buffer, com.mojang.blaze3d.PrimitiveTopology mode, VertexFormat format, float alphaScale) {
+        private BufferBuilderTransparent(ByteBufferBuilder buffer, com.mojang.renderpearl.api.pipeline.PrimitiveTopology mode, VertexFormat format, float alphaScale) {
             super(buffer, mode, format);
             this.alphaScale = Mth.clamp(alphaScale, 0.0F, 1.0F);
         }

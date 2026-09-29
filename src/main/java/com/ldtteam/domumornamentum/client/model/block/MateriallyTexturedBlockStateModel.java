@@ -355,9 +355,9 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             final BakedQuad.MaterialInfo targetInfo = targetSprite.quad().materialInfo();
             return new MutableQuad()
                 .setFrom(source)
-                .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType())
+                .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
                 .setTintIndex(targetInfo.tintIndex())
-                .setShade(targetInfo.shade())
+                .setShadeOverride(targetInfo.shadeDirectionOverride())
                 .setLightEmission(targetInfo.lightEmission())
                 .setAmbientOcclusion(targetInfo.ambientOcclusion())
                 .toBakedQuad();

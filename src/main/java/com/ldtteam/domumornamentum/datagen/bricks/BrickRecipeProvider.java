@@ -2,8 +2,9 @@ package com.ldtteam.domumornamentum.datagen.bricks;
 
 import com.ldtteam.domumornamentum.block.ModBlocks;
 import com.ldtteam.domumornamentum.block.decorative.BrickBlock;
-import net.minecraft.core.HolderLookup.Provider;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
@@ -15,9 +16,9 @@ import java.util.Objects;
 
 public class BrickRecipeProvider extends DomumRecipeProvider {
 
-    public BrickRecipeProvider(HolderLookup.Provider registries, RecipeOutput output)
+    public BrickRecipeProvider(final BootstrapContext<Recipe<?>> recipes, final BootstrapContext<Advancement> advancements)
     {
-        super(registries, output);
+        super(recipes, advancements);
     }
 
     @Override

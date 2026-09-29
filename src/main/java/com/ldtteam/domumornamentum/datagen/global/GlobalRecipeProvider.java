@@ -1,7 +1,9 @@
 package com.ldtteam.domumornamentum.datagen.global;
 
 import com.ldtteam.domumornamentum.block.ModBlocks;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import com.ldtteam.domumornamentum.datagen.global.DomumRecipeProvider;
@@ -13,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class GlobalRecipeProvider extends DomumRecipeProvider {
 
-    public GlobalRecipeProvider(HolderLookup.Provider registries, RecipeOutput output)
+    public GlobalRecipeProvider(final BootstrapContext<Recipe<?>> recipes, final BootstrapContext<Advancement> advancements)
     {
-        super(registries, output);
+        super(recipes, advancements);
     }
 
     private void buildCutterRecipe(RecipeOutput writer) {

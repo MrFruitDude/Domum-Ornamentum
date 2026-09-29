@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:brown_floating_carpet"
+        "recipes": "domum_ornamentum:brown_floating_carpet"
       },
       "trigger": "minecraft:recipe_unlocked"
     },

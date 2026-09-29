@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:blockbarreldeco_onside"
+        "recipes": "domum_ornamentum:blockbarreldeco_onside"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

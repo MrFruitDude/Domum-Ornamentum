@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "domum_ornamentum:roan_bricks"
+        "recipes": "domum_ornamentum:roan_bricks"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
