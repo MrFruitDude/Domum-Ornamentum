@@ -55,7 +55,7 @@ public class PanelBlock extends AbstractPanelBlockTrapdoor<PanelBlock> implement
 
     public PanelBlock(final Properties props)
     {
-        super(props);
+        super(props.mapColor(MapColor.WOOD).strength(3.0F).noOcclusion().isValidSpawn((state, blockGetter, pos, type) -> false));
         this.registerDefaultState(this.defaultBlockState().setValue(TYPE, TrapdoorType.FULL));
     }
 

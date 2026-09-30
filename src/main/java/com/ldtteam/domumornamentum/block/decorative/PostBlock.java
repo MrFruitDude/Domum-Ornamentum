@@ -46,7 +46,7 @@ public class PostBlock extends AbstractPostBlock<PostBlock> implements IMaterial
 
     public PostBlock(final Properties props)
     {
-        super(props);
+        super(props.mapColor(MapColor.WOOD).strength(3.0F));
         this.registerDefaultState(this.defaultBlockState().setValue(TYPE, PostType.PLAIN));
     }
 
