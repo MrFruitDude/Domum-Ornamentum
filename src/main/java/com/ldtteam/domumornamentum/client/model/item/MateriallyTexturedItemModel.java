@@ -1,6 +1,7 @@
 package com.ldtteam.domumornamentum.client.model.item;
 
 import com.google.common.base.Suppliers;
+import com.ldtteam.domumornamentum.client.color.MaterialTints;
 import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.util.MaterialTextureDataUtil;
 import com.mojang.math.Transformation;
@@ -124,21 +125,28 @@ public final class MateriallyTexturedItemModel implements ItemModel
             output.appendModelIdentityElement(foilType);
         }
 
-        if (!this.tints.isEmpty())
-        {
-            final IntList tintLayers = layer.tintLayers();
-            for (final ItemTintSource tintSource : this.tints)
-            {
-                final int tint = tintSource.calculate(item, level, owner == null ? null : owner.asLivingEntity());
-                tintLayers.add(tint);
-                output.appendModelIdentityElement(tint);
-            }
-        }
-
         MaterialTextureData textureData = MaterialTextureData.readFromItemStack(item);
         if (textureData.isEmpty())
         {
             textureData = MaterialTextureDataUtil.generateRandomTextureDataFrom(item);
+        }
+
+        final IntList tintLayers = layer.tintLayers();
+        if (textureData.isEmpty())
+        {
+            for (final ItemTintSource tintSource : this.tints)
+            {
+                tintLayers.add(tintSource.calculate(item, level, owner == null ? null : owner.asLivingEntity()));
+            }
+        }
+        else
+        {
+            // Retextured quads carry the skin's tint layers (see MaterialTints#remapTintIndex).
+            MaterialTints.collect(textureData, Minecraft.getInstance().getBlockColors(), null, null, tintLayers);
+        }
+        for (int i = 0; i < tintLayers.size(); i++)
+        {
+            output.appendModelIdentityElement(tintLayers.getInt(i));
         }
 
         final QuadCollection quads = textureData.isEmpty()
@@ -225,7 +233,7 @@ public final class MateriallyTexturedItemModel implements ItemModel
         return new MutableQuad()
             .setFrom(source)
             .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
-            .setTintIndex(targetInfo.tintIndex())
+            .setTintIndex(MaterialTints.remapTintIndex(textureData, target, targetInfo.tintIndex()))
             .setShadeOverride(targetInfo.shadeDirectionOverride())
             .setLightEmission(targetInfo.lightEmission())
             .setAmbientOcclusion(targetInfo.ambientOcclusion())

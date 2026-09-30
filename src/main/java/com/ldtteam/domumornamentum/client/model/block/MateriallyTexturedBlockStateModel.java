@@ -1,6 +1,7 @@
 package com.ldtteam.domumornamentum.client.model.block;
 
 import com.ldtteam.domumornamentum.block.IMateriallyTexturedBlock;
+import com.ldtteam.domumornamentum.client.color.MaterialTints;
 import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.client.model.properties.ModProperties;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -356,7 +357,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             return new MutableQuad()
                 .setFrom(source)
                 .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
-                .setTintIndex(targetInfo.tintIndex())
+                .setTintIndex(MaterialTints.remapTintIndex(textureData, target, targetInfo.tintIndex()))
                 .setShadeOverride(targetInfo.shadeDirectionOverride())
                 .setLightEmission(targetInfo.lightEmission())
                 .setAmbientOcclusion(targetInfo.ambientOcclusion())
