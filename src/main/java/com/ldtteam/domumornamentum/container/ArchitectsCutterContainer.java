@@ -19,13 +19,12 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.BlockItemStateProperties;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.ldtteam.domumornamentum.util.GuiConstants.*;
 
@@ -252,17 +251,12 @@ public class ArchitectsCutterContainer extends AbstractContainerMenu
     private void updateAvailableRecipes(Container inventoryIn, List<ItemStack> stacks) {
         this.recipes.clear();
         this.outputInventorySlot.set(ItemStack.EMPTY);
-        if (!stacks.stream().allMatch(ItemStack::isEmpty)) {
-            this.recipes = this.world.registryAccess().lookupOrThrow(Registries.RECIPE)
-                .listElements()
-                .flatMap(holder -> {
-                    if (holder.value() instanceof ArchitectsCutterRecipe recipe) {
-                        return Stream.of(new RecipeHolder<>(holder.key(), recipe));
-                    }
-                    return Stream.<RecipeHolder<ArchitectsCutterRecipe>>empty();
-                })
-                .filter(recipe -> recipe.value().matches(new ArchitectsCutterRecipeInput(inventoryIn), this.world))
-                .toList();
+        // Recipes only exist on the server since MC 1.21.2; the client screen works from item groups and
+        // receives the result slot through normal menu sync.
+        if (this.world instanceof ServerLevel serverLevel && !stacks.stream().allMatch(ItemStack::isEmpty)) {
+            this.recipes = serverLevel.recipeAccess().recipeMap()
+                .getRecipesFor(ModRecipeTypes.ARCHITECTS_CUTTER.get(), new ArchitectsCutterRecipeInput(inventoryIn), serverLevel)
+                .collect(Collectors.toCollection(ArrayList::new));
             this.recipes.sort(Comparator.<RecipeHolder<ArchitectsCutterRecipe>, Identifier>comparing(h -> h.value().getBlockName()).thenComparing(RecipeHolder::id));
         }
         updateRecipeResultSlot();
