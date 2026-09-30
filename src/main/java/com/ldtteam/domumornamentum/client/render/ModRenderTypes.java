@@ -4,6 +4,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.LayeringTransform;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.function.Supplier;
 
 public enum ModRenderTypes {
@@ -13,7 +14,8 @@ public enum ModRenderTypes {
     WIREFRAME_LINES(() -> InternalType.WIREFRAME_LINES),
     WIREFRAME_LINES_ALWAYS(() -> InternalType.WIREFRAME_LINES_ALWAYS),
     WIREFRAME_BODY(() -> InternalType.WIREFRAME_BODY),
-    GHOST_BLOCK_PREVIEW(() -> InternalType.GHOST_BLOCK_PREVIEW),
+    // Vanilla's translucent block type binds the block atlas and lightmap, which a bare pipeline setup does not.
+    GHOST_BLOCK_PREVIEW(RenderTypes::translucentMovingBlock),
     GHOST_BLOCK_PREVIEW_GREATER(() -> InternalType.GHOST_BLOCK_PREVIEW_GREATER),
     GHOST_BLOCK_COLORED_PREVIEW(() -> InternalType.GHOST_BLOCK_COLORED_PREVIEW),
     GHOST_BLOCK_COLORED_PREVIEW_ALWAYS(() -> InternalType.GHOST_BLOCK_COLORED_PREVIEW_ALWAYS);
@@ -48,7 +50,6 @@ public enum ModRenderTypes {
         private static final RenderType WIREFRAME_LINES = translucentLines("domum_ornamentum:wireframe_lines");
         private static final RenderType WIREFRAME_LINES_ALWAYS = translucentLines("domum_ornamentum:wireframe_lines_always");
         private static final RenderType WIREFRAME_BODY = translucentLines("domum_ornamentum:wireframe_body");
-        private static final RenderType GHOST_BLOCK_PREVIEW = translucentBlock("domum_ornamentum:ghost_block_preview");
         private static final RenderType GHOST_BLOCK_PREVIEW_GREATER = translucentBlock("domum_ornamentum:ghost_block_preview_greater");
         private static final RenderType GHOST_BLOCK_COLORED_PREVIEW = translucentBlock("domum_ornamentum:ghost_block_colored_preview");
         private static final RenderType GHOST_BLOCK_COLORED_PREVIEW_ALWAYS = translucentBlock("domum_ornamentum:ghost_block_colored_preview_always");
