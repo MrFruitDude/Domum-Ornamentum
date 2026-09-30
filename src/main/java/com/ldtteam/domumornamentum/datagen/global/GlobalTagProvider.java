@@ -232,6 +232,9 @@ public class GlobalTagProvider extends BlockTagsProvider
             ModBlocks.getInstance().getBricks().stream()
                 .map(GlobalTagProvider::keyFor).collect(Collectors.toList()));
 
+        ModBlocks.getInstance().getExtraTopBlocks().forEach(extraBlock ->
+            addKeys(this.tag(extraBlock.getType().getCategory().getMineableTag()), List.of(keyFor(extraBlock))));
+
         addKeys(this.tag(BlockTags.DOORS), List.of(keyFor(ModBlocks.getInstance().getDoor())));
         addKeys(this.tag(BlockTags.DOORS), List.of(keyFor(ModBlocks.getInstance().getFancyDoor())));
 
