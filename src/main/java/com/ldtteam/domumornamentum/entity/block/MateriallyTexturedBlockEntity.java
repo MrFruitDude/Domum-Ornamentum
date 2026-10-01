@@ -72,7 +72,9 @@ public class MateriallyTexturedBlockEntity extends AbstractMateriallyTexturedBlo
     protected void loadAdditional(final ValueInput input)
     {
         super.loadAdditional(input);
-        textureData = input.read(BLOCK_ENTITY_TEXTURE_DATA, MaterialTextureData.CODEC).orElse(MaterialTextureData.EMPTY);
+        // Like 1.21: go through updateTextureDataWith so unknown components are dropped and, on the client,
+        // the chunk section is re-rendered once the block entity data packet arrives.
+        input.read(BLOCK_ENTITY_TEXTURE_DATA, MaterialTextureData.CODEC).ifPresent(this::updateTextureDataWith);
     }
 
     @Override
