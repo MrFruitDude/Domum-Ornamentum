@@ -15,10 +15,7 @@ public enum ModRenderTypes {
     WIREFRAME_LINES_ALWAYS(() -> InternalType.WIREFRAME_LINES_ALWAYS),
     WIREFRAME_BODY(() -> InternalType.WIREFRAME_BODY),
     // Vanilla's translucent block type binds the block atlas and lightmap, which a bare pipeline setup does not.
-    GHOST_BLOCK_PREVIEW(RenderTypes::translucentMovingBlock),
-    GHOST_BLOCK_PREVIEW_GREATER(() -> InternalType.GHOST_BLOCK_PREVIEW_GREATER),
-    GHOST_BLOCK_COLORED_PREVIEW(() -> InternalType.GHOST_BLOCK_COLORED_PREVIEW),
-    GHOST_BLOCK_COLORED_PREVIEW_ALWAYS(() -> InternalType.GHOST_BLOCK_COLORED_PREVIEW_ALWAYS);
+    GHOST_BLOCK_PREVIEW(RenderTypes::translucentMovingBlock);
 
     private final Supplier<RenderType> typeSupplier;
 
@@ -37,12 +34,6 @@ public enum ModRenderTypes {
             .createRenderSetup());
     }
 
-    private static RenderType translucentBlock(final String name) {
-        return RenderType.create(name, RenderSetup.builder(RenderPipelines.TRANSLUCENT_BLOCK)
-            
-            .createRenderSetup());
-    }
-
     private static class InternalType {
         private static final RenderType MEASUREMENT_LINES = translucentLines("domum_ornamentum:measurement_lines");
         private static final RenderType CHISEL_PREVIEW_INSIDE_BLOCKS = translucentLines("domum_ornamentum:chisel_preview_inside_blocks");
@@ -50,8 +41,5 @@ public enum ModRenderTypes {
         private static final RenderType WIREFRAME_LINES = translucentLines("domum_ornamentum:wireframe_lines");
         private static final RenderType WIREFRAME_LINES_ALWAYS = translucentLines("domum_ornamentum:wireframe_lines_always");
         private static final RenderType WIREFRAME_BODY = translucentLines("domum_ornamentum:wireframe_body");
-        private static final RenderType GHOST_BLOCK_PREVIEW_GREATER = translucentBlock("domum_ornamentum:ghost_block_preview_greater");
-        private static final RenderType GHOST_BLOCK_COLORED_PREVIEW = translucentBlock("domum_ornamentum:ghost_block_colored_preview");
-        private static final RenderType GHOST_BLOCK_COLORED_PREVIEW_ALWAYS = translucentBlock("domum_ornamentum:ghost_block_colored_preview_always");
     }
 }
