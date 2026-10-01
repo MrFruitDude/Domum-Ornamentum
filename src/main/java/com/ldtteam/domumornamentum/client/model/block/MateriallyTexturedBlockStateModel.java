@@ -80,7 +80,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             }
         }
 
-        final Targets immutableTargets = new Targets(Map.copyOf(targets), new ConcurrentHashMap<>());
+        final Targets immutableTargets = new Targets(Map.copyOf(targets), new ConcurrentHashMap<>(), new ConcurrentHashMap<>());
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
             if (!(state.getBlock() instanceof IMateriallyTexturedBlock) || model instanceof MateriallyTexturedBlockStateModel)
             {
@@ -110,7 +110,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
         delegate.collectParts(level, pos, state, random, delegateParts);
         for (final BlockStateModelPart part : delegateParts)
         {
-            parts.add(new MateriallyTexturedBlockStateModelPart(part, textureData, targetModels));
+            parts.add(targetModels.part(part, textureData));
         }
     }
 
@@ -216,6 +216,36 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
 
     private record DirectionKey(@Nullable Direction direction)
     {
+    }
+
+    /**
+     * Cache key for a retextured part: the baked delegate part by identity (baked parts are
+     * shared, and their record equality would hash every quad) plus the material data by value.
+     */
+    private static final class PartKey
+    {
+        private final BlockStateModelPart part;
+        private final MaterialTextureData textureData;
+        private final int hash;
+
+        private PartKey(final BlockStateModelPart part, final MaterialTextureData textureData)
+        {
+            this.part = part;
+            this.textureData = textureData;
+            this.hash = 31 * System.identityHashCode(part) + textureData.hashCode();
+        }
+
+        @Override
+        public boolean equals(final Object o)
+        {
+            return o instanceof PartKey other && other.part == part && other.textureData.equals(textureData);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return hash;
+        }
     }
 
     private record TargetModel(BlockState state, BlockStateModel model)
@@ -370,9 +400,35 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
      * sprites do not depend on the position being meshed (they are read from the skin's own
      * model with an empty level), so they are computed once per skin block and shared by every
      * wrapped model and part until the next model bake replaces this instance.
+     *
+     * <p>The retextured parts are shared the same way: a part's quads depend only on the baked
+     * delegate part and the material data, so every position with the same skin reuses one
+     * wrapper (and its per-direction quad cache) instead of retexturing from scratch on each
+     * mesh build. The part cache is bounded; when full it is cleared and refilled.</p>
      */
-    private record Targets(Map<Block, TargetModel> models, ConcurrentMap<Block, TargetTextures> textureCache)
+    private record Targets(
+        Map<Block, TargetModel> models,
+        ConcurrentMap<Block, TargetTextures> textureCache,
+        ConcurrentMap<PartKey, MateriallyTexturedBlockStateModelPart> partCache
+    )
     {
+        private static final int MAX_CACHED_PARTS = 8192;
+
+        private MateriallyTexturedBlockStateModelPart part(final BlockStateModelPart delegate, final MaterialTextureData textureData)
+        {
+            final PartKey key = new PartKey(delegate, textureData);
+            final MateriallyTexturedBlockStateModelPart cached = partCache.get(key);
+            if (cached != null)
+            {
+                return cached;
+            }
+            if (partCache.size() >= MAX_CACHED_PARTS)
+            {
+                partCache.clear();
+            }
+            return partCache.computeIfAbsent(key, k -> new MateriallyTexturedBlockStateModelPart(delegate, textureData, this));
+        }
+
         @Nullable
         private TargetModel get(final Block target)
         {
