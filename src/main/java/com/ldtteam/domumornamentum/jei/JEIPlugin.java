@@ -3,6 +3,7 @@ import com.ldtteam.domumornamentum.IDomumOrnamentumApi;
 import com.ldtteam.domumornamentum.block.IModBlocks;
 import com.ldtteam.domumornamentum.client.screens.ArchitectsCutterScreen;
 import com.ldtteam.domumornamentum.recipe.architectscutter.ArchitectsCutterRecipe;
+import com.ldtteam.domumornamentum.recipe.architectscutter.ClientArchitectsCutterRecipes;
 import com.ldtteam.domumornamentum.recipe.ModRecipeTypes;
 import com.ldtteam.domumornamentum.util.Constants;
 import mezz.jei.api.IModPlugin;
@@ -11,11 +12,9 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.registration.*;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeMap;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,33 +61,9 @@ public class JEIPlugin implements IModPlugin
     @Override
     public void registerRecipes(@NotNull final IRecipeRegistration registration)
     {
-        final RecipeMap clientRecipes = clientSyncedRecipes();
-        final List<RecipeHolder<ArchitectsCutterRecipe>> recipes = clientRecipes == null ? List.of() : clientRecipes.values().stream()
-            .filter(holder -> holder.value() instanceof ArchitectsCutterRecipe)
-            .map(holder -> new RecipeHolder<>(holder.id(), (ArchitectsCutterRecipe) holder.value()))
-            .toList();
+        final List<RecipeHolder<ArchitectsCutterRecipe>> recipes = ClientArchitectsCutterRecipes.get();
 
         registration.addRecipes(ArchitectsCutterCategory.TYPE, recipes);
-    }
-
-    @Nullable
-    private static RecipeMap clientSyncedRecipes()
-    {
-        try
-        {
-            final Class<?> internal = Class.forName("mezz.jei.common.Internal");
-            if (!(internal.getMethod("hasClientSyncedRecipes").invoke(null) instanceof final Boolean available) || !available)
-            {
-                return null;
-            }
-
-            final Object recipes = internal.getMethod("getClientSyncedRecipes").invoke(null);
-            return recipes instanceof final RecipeMap recipeMap ? recipeMap : null;
-        }
-        catch (final ReflectiveOperationException ignored)
-        {
-            return null;
-        }
     }
 
     @Override
