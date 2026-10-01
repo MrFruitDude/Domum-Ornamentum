@@ -3,6 +3,8 @@ package com.ldtteam.domumornamentum.client.model.item;
 import com.google.common.base.Suppliers;
 import com.ldtteam.domumornamentum.DomumOrnamentum;
 import com.ldtteam.domumornamentum.client.color.MaterialTints;
+import com.ldtteam.domumornamentum.client.model.MaterialRetexturer;
+import com.ldtteam.domumornamentum.client.model.MaterialRetexturer.TargetTextures;
 import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.util.MaterialTextureDataUtil;
 import com.mojang.math.Transformation;
@@ -44,14 +46,13 @@ import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -207,10 +208,19 @@ public final class MateriallyTexturedItemModel implements ItemModel
     {
         final QuadCollection.Builder builder = new QuadCollection.Builder();
         boolean changed = false;
+        // A skin whose textures could not load yet keeps its source quad; flag the result so it is not cached.
+        final Function<Block, @Nullable TargetTextures> textures = target -> {
+            final TargetTextures loaded = targetTextures(target);
+            if (loaded == null)
+            {
+                incomplete[0] = true;
+            }
+            return loaded;
+        };
 
         for (final BakedQuad quad : this.baseQuads.getQuads(null))
         {
-            final BakedQuad replacement = remapQuad(quad, textureData, incomplete);
+            final BakedQuad replacement = MaterialRetexturer.remap(quad, textureData, textures, null);
             if (replacement != null)
             {
                 builder.addUnculledFace(replacement);
@@ -222,7 +232,8 @@ public final class MateriallyTexturedItemModel implements ItemModel
         {
             for (final BakedQuad quad : this.baseQuads.getQuads(direction))
             {
-                final BakedQuad replacement = remapQuad(quad, textureData, incomplete);
+                // Item quads take the skin face of their own normal, not of the cull face (unlike placed blocks).
+                final BakedQuad replacement = MaterialRetexturer.remap(quad, textureData, textures, null);
                 if (replacement != null)
                 {
                     builder.addCulledFace(direction, replacement);
@@ -232,47 +243,6 @@ public final class MateriallyTexturedItemModel implements ItemModel
         }
 
         return changed ? builder.build() : this.baseQuads;
-    }
-
-    /**
-     * Remaps one quad to its component's target texture. Returns {@code null} when the component is set to
-     * AIR (no material): the quad is erased, like the block model and 1.21's RetexturedBakedModelBuilder.
-     */
-    @Nullable
-    private BakedQuad remapQuad(final BakedQuad source, final MaterialTextureData textureData, final boolean[] incomplete)
-    {
-        final Identifier sourceTexture = source.materialInfo().sprite().contents().name();
-        final Block target = textureData.getTexturedComponents().get(sourceTexture);
-        if (target == null)
-        {
-            return source;
-        }
-        if (target == Blocks.AIR)
-        {
-            return null;
-        }
-
-        final TargetTextures textures = targetTextures(target);
-        if (textures == null)
-        {
-            incomplete[0] = true;
-            return source;
-        }
-        final TargetSprite targetSprite = textures.forDirection(source.direction());
-        if (targetSprite == null)
-        {
-            return source;
-        }
-
-        final BakedQuad.MaterialInfo targetInfo = targetSprite.quad().materialInfo();
-        return new MutableQuad()
-            .setFrom(source)
-            .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
-            .setTintIndex(MaterialTints.remapTintIndex(textureData, target, targetInfo.tintIndex()))
-            .setShadeOverride(targetInfo.shadeDirectionOverride())
-            .setLightEmission(targetInfo.lightEmission())
-            .setAmbientOcclusion(targetInfo.ambientOcclusion())
-            .toBakedQuad();
     }
 
     /**
@@ -294,33 +264,7 @@ public final class MateriallyTexturedItemModel implements ItemModel
             final BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(block.defaultBlockState());
             final List<BlockStateModelPart> parts = new ArrayList<>();
             model.collectParts(RandomSource.create(0L), parts);
-            final EnumMap<Direction, TargetSprite> byDirection = new EnumMap<>(Direction.class);
-            TargetSprite unculled = null;
-
-            for (final BlockStateModelPart part : parts)
-            {
-                final List<BakedQuad> unculledQuads = part.getQuads(null);
-                if (unculled == null && !unculledQuads.isEmpty())
-                {
-                    unculled = targetSprite(unculledQuads.getFirst());
-                }
-
-                for (final Direction direction : Direction.values())
-                {
-                    if (byDirection.containsKey(direction))
-                    {
-                        continue;
-                    }
-                    final List<BakedQuad> directionalQuads = part.getQuads(direction);
-                    if (!directionalQuads.isEmpty())
-                    {
-                        byDirection.put(direction, targetSprite(directionalQuads.getFirst()));
-                    }
-                }
-            }
-
-            final Material.Baked particle = model.particleMaterial();
-            return new TargetTextures(byDirection, unculled, particle);
+            return TargetTextures.of(parts, model.particleMaterial());
         }
         catch (final RuntimeException e)
         {
@@ -334,39 +278,9 @@ public final class MateriallyTexturedItemModel implements ItemModel
         }
     }
 
-    private static TargetSprite targetSprite(final BakedQuad quad)
-    {
-        return new TargetSprite(quad);
-    }
-
     private static boolean hasSpecialAnimatedTexture(final ItemStack itemStack)
     {
         return itemStack.is(ItemTags.COMPASSES) || itemStack.is(Items.CLOCK);
-    }
-
-    private record TargetSprite(BakedQuad quad)
-    {
-    }
-
-    private record TargetTextures(
-        Map<Direction, TargetSprite> byDirection,
-        @Nullable TargetSprite unculled,
-        Material.@Nullable Baked particleMaterial
-    )
-    {
-        @Nullable
-        private TargetSprite forDirection(final Direction direction)
-        {
-            if (direction != null)
-            {
-                final TargetSprite directional = this.byDirection.get(direction);
-                if (directional != null)
-                {
-                    return directional;
-                }
-            }
-            return this.unculled;
-        }
     }
 
     public record Unbaked(

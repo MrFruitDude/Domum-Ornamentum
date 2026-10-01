@@ -1,13 +1,13 @@
 package com.ldtteam.domumornamentum.client.model.block;
 
 import com.ldtteam.domumornamentum.block.IMateriallyTexturedBlock;
-import com.ldtteam.domumornamentum.client.color.MaterialTints;
+import com.ldtteam.domumornamentum.client.model.MaterialRetexturer;
+import com.ldtteam.domumornamentum.client.model.MaterialRetexturer.TargetTextures;
 import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.client.model.properties.ModProperties;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.model.DynamicBlockStateModel;
-import net.neoforged.neoforge.client.model.quad.MutableQuad;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Adds Domum Ornamentum's material component remapping to the modern 26.2
@@ -42,8 +42,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class MateriallyTexturedBlockStateModel implements DynamicBlockStateModel
 {
-    private static final DirectionKey UNCULLED = new DirectionKey(null);
-
     private final BlockStateModel delegate;
     private final Targets targetModels;
 
@@ -214,10 +212,6 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
     {
     }
 
-    private record DirectionKey(@Nullable Direction direction)
-    {
-    }
-
     /**
      * Cache key for a retextured part: the baked delegate part by identity (baked parts are
      * shared, and their record equality would hash every quad) plus the material data by value.
@@ -252,46 +246,18 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
     {
     }
 
-    private record TargetSprite(BakedQuad quad)
-    {
-        private TextureAtlasSprite sprite()
-        {
-            return quad.materialInfo().sprite();
-        }
-    }
-
-    private record TargetTextures(
-        Map<Direction, TargetSprite> byDirection,
-        @Nullable TargetSprite unculled,
-        Material.@Nullable Baked particleMaterial,
-        @BakedQuad.MaterialFlags int materialFlags
-    )
-    {
-        private static final TargetTextures EMPTY = new TargetTextures(Map.of(), null, null, 0);
-
-        @Nullable
-        private TargetSprite forDirection(@Nullable final Direction requested, final Direction normal)
-        {
-            if (requested != null)
-            {
-                final TargetSprite directional = byDirection.get(requested);
-                if (directional != null)
-                {
-                    return directional;
-                }
-            }
-
-            final TargetSprite normalSprite = byDirection.get(normal);
-            return normalSprite == null ? unculled : normalSprite;
-        }
-    }
-
     private static final class MateriallyTexturedBlockStateModelPart implements BlockStateModelPart
     {
+        /** Slot of the unculled quads in {@link #retexturedQuads}; the six faces use their ordinal. */
+        private static final int UNCULLED_SLOT = Direction.values().length;
+
         private final BlockStateModelPart delegate;
         private final MaterialTextureData textureData;
         private final Targets targetModels;
-        private final ConcurrentMap<DirectionKey, List<BakedQuad>> retexturedQuads = new ConcurrentHashMap<>();
+        /** Retextured quads per face (by ordinal) plus the unculled ones, built on first request. */
+        private final AtomicReferenceArray<List<BakedQuad>> retexturedQuads = new AtomicReferenceArray<>(UNCULLED_SLOT + 1);
+        /** The delegate's flags plus every skin's; the skins are fixed for this bake, so this is computed once. */
+        private final @BakedQuad.MaterialFlags int materialFlags;
 
         private MateriallyTexturedBlockStateModelPart(
             final BlockStateModelPart delegate,
@@ -302,15 +268,31 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             this.delegate = delegate;
             this.textureData = textureData;
             this.targetModels = targetModels;
+
+            int flags = delegate.materialFlags();
+            for (final Block target : textureData.getTexturedComponents().values())
+            {
+                final TargetModel targetModel = targetModels.get(target);
+                if (targetModel != null && target != Blocks.AIR)
+                {
+                    flags |= targetModel.model().materialFlags();
+                }
+            }
+            this.materialFlags = flags;
         }
 
         @Override
         public List<BakedQuad> getQuads(@Nullable final Direction direction)
         {
-            return retexturedQuads.computeIfAbsent(
-                direction == null ? UNCULLED : new DirectionKey(direction),
-                this::buildQuads
-            );
+            final int slot = direction == null ? UNCULLED_SLOT : direction.ordinal();
+            final List<BakedQuad> cached = retexturedQuads.get(slot);
+            if (cached != null)
+            {
+                return cached;
+            }
+            // Two threads may build the same face at once; both results are equal, and the first one stored wins.
+            final List<BakedQuad> built = buildQuads(direction);
+            return retexturedQuads.compareAndSet(slot, null, built) ? built : retexturedQuads.get(slot);
         }
 
         @Override
@@ -328,21 +310,12 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
         @Override
         public @BakedQuad.MaterialFlags int materialFlags()
         {
-            int flags = delegate.materialFlags();
-            for (final Block target : textureData.getTexturedComponents().values())
-            {
-                final TargetModel targetModel = targetModels.get(target);
-                if (targetModel != null && target != Blocks.AIR)
-                {
-                    flags |= targetModel.model().materialFlags();
-                }
-            }
-            return flags;
+            return materialFlags;
         }
 
-        private List<BakedQuad> buildQuads(final DirectionKey key)
+        private List<BakedQuad> buildQuads(@Nullable final Direction direction)
         {
-            final List<BakedQuad> sourceQuads = delegate.getQuads(key.direction());
+            final List<BakedQuad> sourceQuads = delegate.getQuads(direction);
             if (sourceQuads.isEmpty())
             {
                 return sourceQuads;
@@ -352,7 +325,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             boolean changed = false;
             for (final BakedQuad source : sourceQuads)
             {
-                final BakedQuad replacement = remap(source, key.direction());
+                final BakedQuad replacement = MaterialRetexturer.remap(source, textureData, targetModels::textures, direction);
                 if (replacement != null)
                 {
                     result.add(replacement);
@@ -360,38 +333,6 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
                 changed |= replacement != source;
             }
             return changed ? List.copyOf(result) : sourceQuads;
-        }
-
-        @Nullable
-        private BakedQuad remap(final BakedQuad source, @Nullable final Direction requestedDirection)
-        {
-            final Identifier sourceTexture = source.materialInfo().sprite().contents().name();
-            final Block target = textureData.getTexturedComponents().get(sourceTexture);
-            if (target == null)
-            {
-                return source;
-            }
-            if (target == Blocks.AIR)
-            {
-                return null;
-            }
-
-            final TargetTextures textures = targetModels.textures(target);
-            final TargetSprite targetSprite = textures.forDirection(requestedDirection, source.direction());
-            if (targetSprite == null)
-            {
-                return source;
-            }
-
-            final BakedQuad.MaterialInfo targetInfo = targetSprite.quad().materialInfo();
-            return new MutableQuad()
-                .setFrom(source)
-                .setSpriteAndMoveUv(targetInfo.sprite(), targetInfo.layer(), targetInfo.itemRenderType(), targetInfo.itemGlintRenderType(), targetInfo.itemGlintSpecialRenderType())
-                .setTintIndex(MaterialTints.remapTintIndex(textureData, target, targetInfo.tintIndex()))
-                .setShadeOverride(targetInfo.shadeDirectionOverride())
-                .setLightEmission(targetInfo.lightEmission())
-                .setAmbientOcclusion(targetInfo.ambientOcclusion())
-                .toBakedQuad();
         }
     }
 
@@ -452,36 +393,6 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             RandomSource.create(0L),
             parts
         );
-
-        final Map<Direction, TargetSprite> byDirection = new HashMap<>();
-        TargetSprite unculled = null;
-        for (final BlockStateModelPart part : parts)
-        {
-            final List<BakedQuad> unculledQuads = part.getQuads(null);
-            if (unculled == null && !unculledQuads.isEmpty())
-            {
-                unculled = new TargetSprite(unculledQuads.getFirst());
-            }
-
-            for (final Direction direction : Direction.values())
-            {
-                if (byDirection.containsKey(direction))
-                {
-                    continue;
-                }
-                final List<BakedQuad> directionalQuads = part.getQuads(direction);
-                if (!directionalQuads.isEmpty())
-                {
-                    byDirection.put(direction, new TargetSprite(directionalQuads.getFirst()));
-                }
-            }
-        }
-
-        return new TargetTextures(
-            Map.copyOf(byDirection),
-            unculled,
-            targetModel.model().particleMaterial(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state()),
-            targetModel.model().materialFlags(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state())
-        );
+        return TargetTextures.of(parts, targetModel.model().particleMaterial(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state()));
     }
 }
