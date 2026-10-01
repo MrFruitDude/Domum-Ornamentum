@@ -45,11 +45,11 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
     private static final DirectionKey UNCULLED = new DirectionKey(null);
 
     private final BlockStateModel delegate;
-    private final Map<Block, TargetModel> targetModels;
+    private final Targets targetModels;
 
     private MateriallyTexturedBlockStateModel(
         final BlockStateModel delegate,
-        final Map<Block, TargetModel> targetModels
+        final Targets targetModels
     )
     {
         this.delegate = delegate;
@@ -80,7 +80,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
             }
         }
 
-        final Map<Block, TargetModel> immutableTargets = Map.copyOf(targets);
+        final Targets immutableTargets = new Targets(Map.copyOf(targets), new ConcurrentHashMap<>());
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
             if (!(state.getBlock() instanceof IMateriallyTexturedBlock) || model instanceof MateriallyTexturedBlockStateModel)
             {
@@ -260,13 +260,13 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
     {
         private final BlockStateModelPart delegate;
         private final MaterialTextureData textureData;
-        private final Map<Block, TargetModel> targetModels;
+        private final Targets targetModels;
         private final ConcurrentMap<DirectionKey, List<BakedQuad>> retexturedQuads = new ConcurrentHashMap<>();
 
         private MateriallyTexturedBlockStateModelPart(
             final BlockStateModelPart delegate,
             final MaterialTextureData textureData,
-            final Map<Block, TargetModel> targetModels
+            final Targets targetModels
         )
         {
             this.delegate = delegate;
@@ -346,7 +346,7 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
                 return null;
             }
 
-            final TargetTextures textures = targetTextures(target);
+            final TargetTextures textures = targetModels.textures(target);
             final TargetSprite targetSprite = textures.forDirection(requestedDirection, source.direction());
             if (targetSprite == null)
             {
@@ -363,54 +363,69 @@ public final class MateriallyTexturedBlockStateModel implements DynamicBlockStat
                 .setAmbientOcclusion(targetInfo.ambientOcclusion())
                 .toBakedQuad();
         }
+    }
 
-        private TargetTextures targetTextures(final Block target)
+    /**
+     * The skin models captured at install time plus a cache of each skin's sprites. A skin's
+     * sprites do not depend on the position being meshed (they are read from the skin's own
+     * model with an empty level), so they are computed once per skin block and shared by every
+     * wrapped model and part until the next model bake replaces this instance.
+     */
+    private record Targets(Map<Block, TargetModel> models, ConcurrentMap<Block, TargetTextures> textureCache)
+    {
+        @Nullable
+        private TargetModel get(final Block target)
         {
-            final TargetModel targetModel = targetModels.get(target);
-            if (targetModel == null)
-            {
-                return TargetTextures.EMPTY;
-            }
-
-            final List<BlockStateModelPart> parts = new ArrayList<>();
-            targetModel.model().collectParts(
-                BlockAndTintGetter.EMPTY,
-                BlockPos.ZERO,
-                targetModel.state(),
-                RandomSource.create(0L),
-                parts
-            );
-
-            final Map<Direction, TargetSprite> byDirection = new HashMap<>();
-            TargetSprite unculled = null;
-            for (final BlockStateModelPart part : parts)
-            {
-                final List<BakedQuad> unculledQuads = part.getQuads(null);
-                if (unculled == null && !unculledQuads.isEmpty())
-                {
-                    unculled = new TargetSprite(unculledQuads.getFirst());
-                }
-
-                for (final Direction direction : Direction.values())
-                {
-                    if (byDirection.containsKey(direction))
-                    {
-                        continue;
-                    }
-                    final List<BakedQuad> directionalQuads = part.getQuads(direction);
-                    if (!directionalQuads.isEmpty())
-                    {
-                        byDirection.put(direction, new TargetSprite(directionalQuads.getFirst()));
-                    }
-                }
-            }
-
-            return new TargetTextures(
-                Map.copyOf(byDirection),
-                unculled,
-                targetModel.model().particleMaterial(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state()),
-                targetModel.model().materialFlags(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state())
-            );
+            return models.get(target);
         }
+
+        private TargetTextures textures(final Block target)
+        {
+            final TargetModel targetModel = models.get(target);
+            return targetModel == null ? TargetTextures.EMPTY : textureCache.computeIfAbsent(target, b -> targetTextures(targetModel));
+        }
+    }
+
+    private static TargetTextures targetTextures(final TargetModel targetModel)
+    {
+        final List<BlockStateModelPart> parts = new ArrayList<>();
+        targetModel.model().collectParts(
+            BlockAndTintGetter.EMPTY,
+            BlockPos.ZERO,
+            targetModel.state(),
+            RandomSource.create(0L),
+            parts
+        );
+
+        final Map<Direction, TargetSprite> byDirection = new HashMap<>();
+        TargetSprite unculled = null;
+        for (final BlockStateModelPart part : parts)
+        {
+            final List<BakedQuad> unculledQuads = part.getQuads(null);
+            if (unculled == null && !unculledQuads.isEmpty())
+            {
+                unculled = new TargetSprite(unculledQuads.getFirst());
+            }
+
+            for (final Direction direction : Direction.values())
+            {
+                if (byDirection.containsKey(direction))
+                {
+                    continue;
+                }
+                final List<BakedQuad> directionalQuads = part.getQuads(direction);
+                if (!directionalQuads.isEmpty())
+                {
+                    byDirection.put(direction, new TargetSprite(directionalQuads.getFirst()));
+                }
+            }
+        }
+
+        return new TargetTextures(
+            Map.copyOf(byDirection),
+            unculled,
+            targetModel.model().particleMaterial(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state()),
+            targetModel.model().materialFlags(BlockAndTintGetter.EMPTY, BlockPos.ZERO, targetModel.state())
+        );
     }
 }
