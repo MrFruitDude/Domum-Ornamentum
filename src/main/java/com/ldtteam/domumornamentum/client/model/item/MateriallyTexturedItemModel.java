@@ -133,6 +133,9 @@ public final class MateriallyTexturedItemModel implements ItemModel
         {
             textureData = MaterialTextureDataUtil.generateRandomTextureDataFrom(item);
         }
+        // The GUI item atlas reuses one icon per model identity, so the materials must be part of it; otherwise
+        // every stack of this item whose tint layers match shares whichever icon was drawn first.
+        output.appendModelIdentityElement(textureData);
 
         final IntList tintLayers = layer.tintLayers();
         if (textureData.isEmpty())
