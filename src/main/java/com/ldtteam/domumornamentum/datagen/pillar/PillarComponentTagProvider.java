@@ -30,14 +30,13 @@ public class PillarComponentTagProvider extends BlockTagsProvider
     @SuppressWarnings("unchecked")
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        final var tagVar1 = this.tag(ModTags.PILLAR_MATERIALS);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(ModTags.PILLAR_MATERIALS),
             Blocks.BRICKS,
             Blocks.DEEPSLATE,
             Blocks.COBBLED_DEEPSLATE,
             Blocks.POLISHED_BLACKSTONE
-          );
-        tagVar1.addTags(
+          )
+          .addTags(
             ModTags.GLOBAL_DEFAULT,
             BlockTags.PLANKS
           );

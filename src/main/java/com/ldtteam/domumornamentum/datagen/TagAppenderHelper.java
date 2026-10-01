@@ -15,32 +15,25 @@ public final class TagAppenderHelper
     {
     }
 
+    public static ResourceKey<Block> keyFor(final Block block)
+    {
+        return ResourceKey.create(Registries.BLOCK, BuiltInRegistries.BLOCK.getKey(block));
+    }
+
     public static TagAppender<Block> addBlocks(final TagAppender<Block> appender, final Block... blocks)
     {
         for (final Block block : blocks)
         {
-            appender.add(ResourceKey.create(Registries.BLOCK, BuiltInRegistries.BLOCK.getKey(block)));
+            appender.add(keyFor(block));
         }
         return appender;
     }
 
-    public static TagAppender<Block> addBlocks(final TagAppender<Block> appender, final Iterable<Block> blocks)
+    public static TagAppender<Block> addBlocks(final TagAppender<Block> appender, final Iterable<? extends Block> blocks)
     {
         for (final Block block : blocks)
         {
-            appender.add(ResourceKey.create(Registries.BLOCK, BuiltInRegistries.BLOCK.getKey(block)));
-        }
-        return appender;
-    }
-
-    public static TagAppender<Block> addKeys(
-        final TagAppender<Block> appender,
-        final Iterable<ResourceKey<Block>> keys
-    )
-    {
-        for (final ResourceKey<Block> key : keys)
-        {
-            appender.add(key);
+            appender.add(keyFor(block));
         }
         return appender;
     }

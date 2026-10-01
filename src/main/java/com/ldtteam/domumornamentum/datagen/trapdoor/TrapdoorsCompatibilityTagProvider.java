@@ -22,13 +22,11 @@ public class TrapdoorsCompatibilityTagProvider extends BlockTagsProvider
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
 
-        final var tagVar1 = this.tag(BlockTags.TRAPDOORS);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(BlockTags.TRAPDOORS),
             ModBlocks.getInstance().getTrapdoor()
           );
 
-        final var tagVar2 = this.tag(BlockTags.WOODEN_TRAPDOORS);
-        addBlocks(tagVar2,
+        addBlocks(this.tag(BlockTags.WOODEN_TRAPDOORS),
             ModBlocks.getInstance().getTrapdoor()
           );
     }

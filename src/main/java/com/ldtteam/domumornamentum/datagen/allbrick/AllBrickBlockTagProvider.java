@@ -3,7 +3,6 @@ package com.ldtteam.domumornamentum.datagen.allbrick;
 import static com.ldtteam.domumornamentum.datagen.TagAppenderHelper.addBlocks;
 
 import com.ldtteam.domumornamentum.tag.ModTags;
-import net.minecraft.data.tags.TagAppender;
 import com.ldtteam.domumornamentum.util.Constants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -33,8 +32,7 @@ public class AllBrickBlockTagProvider extends BlockTagsProvider
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
 
-        final var tagVar0 = this.tag(ModTags.ALL_BRICK_MATERIALS);
-        addBlocks(tagVar0,
+        addBlocks(this.tag(ModTags.ALL_BRICK_MATERIALS),
             Blocks.MOSS_BLOCK,
             Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS,
             Blocks.CHISELED_POLISHED_BLACKSTONE,
@@ -100,8 +98,8 @@ public class AllBrickBlockTagProvider extends BlockTagsProvider
             Blocks.POLISHED_ANDESITE,
             Blocks.POLISHED_DIORITE,
             Blocks.POLISHED_GRANITE
-          );
-        tagVar0.addTags(
+          )
+          .addTags(
             ModTags.EXTRA_BLOCKS,
             Tags.Blocks.END_STONES,
             ModTags.BRICKS,

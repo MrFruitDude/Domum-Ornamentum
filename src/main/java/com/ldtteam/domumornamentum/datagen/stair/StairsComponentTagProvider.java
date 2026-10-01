@@ -32,8 +32,7 @@ public class StairsComponentTagProvider extends BlockTagsProvider
     @SuppressWarnings("unchecked")
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        final var tagVar1 = this.tag(ModTags.STAIRS_MATERIALS);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(ModTags.STAIRS_MATERIALS),
             Blocks.BLACKSTONE,
             Blocks.GILDED_BLACKSTONE,
             Blocks.NETHERRACK,
@@ -69,8 +68,8 @@ public class StairsComponentTagProvider extends BlockTagsProvider
             Blocks.CALCITE,
             Blocks.BONE_BLOCK,
             Blocks.DRIED_KELP_BLOCK
-          );
-        tagVar1.addTags(
+          )
+          .addTags(
             ModTags.EXTRA_BLOCKS,
             ModTags.BRICKS,
             ModTags.CONCRETE,

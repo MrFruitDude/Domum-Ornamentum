@@ -30,28 +30,26 @@ public class ShinglesComponentTagProvider extends BlockTagsProvider
     @SuppressWarnings("unchecked")
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        final var tagVar1 = this.tag(ModTags.SHINGLES_ROOF);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(ModTags.SHINGLES_ROOF),
             Blocks.CLAY,
             Blocks.BRICKS,
             Blocks.DEEPSLATE,
             Blocks.COBBLED_DEEPSLATE,
             Blocks.POLISHED_BLACKSTONE
-          );
-        tagVar1.addTags(
+          )
+          .addTags(
             ModTags.GLOBAL_DEFAULT,
             BlockTags.LEAVES,
             BlockTags.PLANKS,
             BlockTags.DIRT
           );
 
-        final var tagVar2 = this.tag(ModTags.SHINGLES_SUPPORT);
-        addBlocks(tagVar2,
+        addBlocks(this.tag(ModTags.SHINGLES_SUPPORT),
             Blocks.DEEPSLATE,
             Blocks.COBBLED_DEEPSLATE,
             Blocks.POLISHED_BLACKSTONE
-          );
-        tagVar2.addTags(
+          )
+          .addTags(
             ModTags.GLOBAL_DEFAULT,
             BlockTags.PLANKS
           );

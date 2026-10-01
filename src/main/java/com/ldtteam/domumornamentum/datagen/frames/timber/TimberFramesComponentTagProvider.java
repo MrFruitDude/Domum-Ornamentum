@@ -31,32 +31,30 @@ public class TimberFramesComponentTagProvider extends BlockTagsProvider
     @SuppressWarnings("unchecked")
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        final var tagVar1 = this.tag(ModTags.TIMBERFRAMES_FRAME);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(ModTags.TIMBERFRAMES_FRAME),
             Blocks.BRICKS,
             Blocks.DEEPSLATE,
             Blocks.DEEPSLATE_BRICKS,
             Blocks.COBBLED_DEEPSLATE,
             Blocks.POLISHED_DEEPSLATE,
             Blocks.POLISHED_BLACKSTONE
-          );
-        tagVar1.addTags(
+          )
+          .addTags(
             ModTags.GLOBAL_DEFAULT,
             BlockTags.PLANKS,
             Tags.Blocks.OBSIDIANS,
             Tags.Blocks.STONES
           );
 
-        final var tagVar2 = this.tag(ModTags.TIMBERFRAMES_CENTER);
-        addBlocks(tagVar2,
+        addBlocks(this.tag(ModTags.TIMBERFRAMES_CENTER),
             Blocks.BRICKS,
             Blocks.DEEPSLATE,
             Blocks.DEEPSLATE_BRICKS,
             Blocks.COBBLED_DEEPSLATE,
             Blocks.POLISHED_DEEPSLATE,
             Blocks.POLISHED_BLACKSTONE
-          );
-        tagVar2.addTags(
+          )
+          .addTags(
             ModTags.GLOBAL_DEFAULT,
             BlockTags.PLANKS,
             Tags.Blocks.COBBLESTONES,

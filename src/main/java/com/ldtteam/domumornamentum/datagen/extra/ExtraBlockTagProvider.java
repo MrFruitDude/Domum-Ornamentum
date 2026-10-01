@@ -6,7 +6,6 @@ import com.ldtteam.domumornamentum.tag.ModTags;
 import com.ldtteam.domumornamentum.util.Constants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
-import net.minecraft.world.level.block.Block;
 import com.ldtteam.domumornamentum.datagen.tags.BlockTagsProvider;
 import com.ldtteam.domumornamentum.datagen.DatagenContext;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,7 @@ public class ExtraBlockTagProvider extends BlockTagsProvider
 
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        for (final Block block : ModBlocks.getInstance().getExtraTopBlocks())
-        {
-            final var tagVar1 = this.tag(ModTags.EXTRA_BLOCKS);
-        addBlocks(tagVar1,block);
-        }
+        addBlocks(this.tag(ModTags.EXTRA_BLOCKS), ModBlocks.getInstance().getExtraTopBlocks());
     }
 
     @Override

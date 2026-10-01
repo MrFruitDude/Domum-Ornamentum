@@ -22,8 +22,7 @@ public class FenceGateCompatibilityTagProvider extends BlockTagsProvider
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
 
-        final var tagVar1 = this.tag(BlockTags.FENCE_GATES);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(BlockTags.FENCE_GATES),
             ModBlocks.getInstance().getFenceGate()
           );
     }

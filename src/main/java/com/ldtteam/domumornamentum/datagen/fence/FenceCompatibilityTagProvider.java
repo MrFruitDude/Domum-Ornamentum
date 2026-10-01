@@ -22,13 +22,11 @@ public class FenceCompatibilityTagProvider extends BlockTagsProvider
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
 
-        final var tagVar1 = this.tag(BlockTags.FENCES);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(BlockTags.FENCES),
             ModBlocks.getInstance().getFence()
           );
 
-        final var tagVar2 = this.tag(BlockTags.WOODEN_FENCES);
-        addBlocks(tagVar2,
+        addBlocks(this.tag(BlockTags.WOODEN_FENCES),
             ModBlocks.getInstance().getFence()
           );
     }

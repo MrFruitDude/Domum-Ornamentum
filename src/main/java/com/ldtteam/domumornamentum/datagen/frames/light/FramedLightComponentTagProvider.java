@@ -21,8 +21,7 @@ public class FramedLightComponentTagProvider extends BlockTagsProvider
 
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
-        final var tagVar1 = this.tag(ModTags.FRAMED_LIGHT_CENTER);
-        addBlocks(tagVar1,
+        addBlocks(this.tag(ModTags.FRAMED_LIGHT_CENTER),
             Blocks.GLOWSTONE,
             Blocks.SEA_LANTERN,
             Blocks.OCHRE_FROGLIGHT,
