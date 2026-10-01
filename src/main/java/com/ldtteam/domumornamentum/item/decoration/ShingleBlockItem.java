@@ -40,7 +40,8 @@ public class ShingleBlockItem extends BlockItemWithClientBePlacement implements 
         final Block centerBlock = textureData.getTexturedComponents().getOrDefault(coverComponent.getId(), coverComponent.getDefault());
         final Component centerBlockName = BlockUtils.getHoverName(centerBlock);
 
-        return Component.translatable(Constants.MOD_ID + ".shingle.name.format." + stack.getItem().getDescriptionId(), centerBlockName);
+        // port26.3: 26.x block items report an item.* description id; the format keys are keyed by the block's (block.*), as in 1.21.
+        return Component.translatable(Constants.MOD_ID + ".shingle.name.format." + shingleBlock.getDescriptionId(), centerBlockName);
     }
 
     @Override
