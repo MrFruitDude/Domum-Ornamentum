@@ -1,6 +1,7 @@
 package com.ldtteam.domumornamentum.client.model.item;
 
 import com.google.common.base.Suppliers;
+import com.ldtteam.domumornamentum.DomumOrnamentum;
 import com.ldtteam.domumornamentum.client.color.MaterialTints;
 import com.ldtteam.domumornamentum.client.model.data.MaterialTextureData;
 import com.ldtteam.domumornamentum.util.MaterialTextureDataUtil;
@@ -73,6 +74,8 @@ public final class MateriallyTexturedItemModel implements ItemModel
     /** MC 26.3: item layers take pre-split (solid/translucent) quads; cache the split per quad collection. */
     private final ConcurrentMap<QuadCollection, ItemQuads> itemQuads = new ConcurrentHashMap<>();
     private final ConcurrentMap<Block, TargetTextures> targetTextures = new ConcurrentHashMap<>();
+    /** Target blocks whose texture load already failed once and was logged, so a retry every frame stays quiet. */
+    private static final Set<Block> LOGGED_LOAD_FAILURES = ConcurrentHashMap.newKeySet();
 
     private MateriallyTexturedItemModel(
         final List<ItemTintSource> tints,
@@ -149,9 +152,19 @@ public final class MateriallyTexturedItemModel implements ItemModel
             output.appendModelIdentityElement(tintLayers.getInt(i));
         }
 
-        final QuadCollection quads = textureData.isEmpty()
-            ? this.baseQuads
-            : this.retexturedQuads.computeIfAbsent(textureData, this::buildRetexturedQuads);
+        QuadCollection quads = textureData.isEmpty() ? this.baseQuads : this.retexturedQuads.get(textureData);
+        boolean cacheable = true;
+        if (quads == null)
+        {
+            final boolean[] incomplete = new boolean[1];
+            quads = buildRetexturedQuads(textureData, incomplete);
+            cacheable = !incomplete[0];
+            if (cacheable)
+            {
+                // Only cache a result whose target textures all loaded, so a transient load failure is retried.
+                this.retexturedQuads.putIfAbsent(textureData, quads);
+            }
+        }
 
         layer.setExtents(this.extents);
         layer.setLocalTransform(this.transformation);
@@ -160,7 +173,7 @@ public final class MateriallyTexturedItemModel implements ItemModel
         {
             remapParticleMaterial(layer, textureData);
         }
-        layer.setQuads(this.itemQuads.computeIfAbsent(quads, q -> ItemQuads.split(q.getAll())));
+        layer.setQuads(cacheable ? this.itemQuads.computeIfAbsent(quads, q -> ItemQuads.split(q.getAll())) : ItemQuads.split(quads.getAll()));
         if (quads.hasMaterialFlag(BakedQuad.FLAG_ANIMATED))
         {
             output.setAnimated();
@@ -179,24 +192,26 @@ public final class MateriallyTexturedItemModel implements ItemModel
             return;
         }
 
-        final Material.Baked replacement = this.targetTextures
-            .computeIfAbsent(target, MateriallyTexturedItemModel::loadTargetTextures)
-            .particleMaterial();
+        final TargetTextures textures = targetTextures(target);
+        final Material.Baked replacement = textures == null ? null : textures.particleMaterial();
         if (replacement != null)
         {
             layer.setParticleMaterial(replacement);
         }
     }
 
-    private QuadCollection buildRetexturedQuads(final MaterialTextureData textureData)
+    private QuadCollection buildRetexturedQuads(final MaterialTextureData textureData, final boolean[] incomplete)
     {
         final QuadCollection.Builder builder = new QuadCollection.Builder();
         boolean changed = false;
 
         for (final BakedQuad quad : this.baseQuads.getQuads(null))
         {
-            final BakedQuad replacement = remapQuad(quad, textureData);
-            builder.addUnculledFace(replacement);
+            final BakedQuad replacement = remapQuad(quad, textureData, incomplete);
+            if (replacement != null)
+            {
+                builder.addUnculledFace(replacement);
+            }
             changed |= replacement != quad;
         }
 
@@ -204,8 +219,11 @@ public final class MateriallyTexturedItemModel implements ItemModel
         {
             for (final BakedQuad quad : this.baseQuads.getQuads(direction))
             {
-                final BakedQuad replacement = remapQuad(quad, textureData);
-                builder.addCulledFace(direction, replacement);
+                final BakedQuad replacement = remapQuad(quad, textureData, incomplete);
+                if (replacement != null)
+                {
+                    builder.addCulledFace(direction, replacement);
+                }
                 changed |= replacement != quad;
             }
         }
@@ -213,16 +231,30 @@ public final class MateriallyTexturedItemModel implements ItemModel
         return changed ? builder.build() : this.baseQuads;
     }
 
-    private BakedQuad remapQuad(final BakedQuad source, final MaterialTextureData textureData)
+    /**
+     * Remaps one quad to its component's target texture. Returns {@code null} when the component is set to
+     * AIR (no material): the quad is erased, like the block model and 1.21's RetexturedBakedModelBuilder.
+     */
+    @Nullable
+    private BakedQuad remapQuad(final BakedQuad source, final MaterialTextureData textureData, final boolean[] incomplete)
     {
         final Identifier sourceTexture = source.materialInfo().sprite().contents().name();
         final Block target = textureData.getTexturedComponents().get(sourceTexture);
-        if (target == null || target == Blocks.AIR)
+        if (target == null)
         {
             return source;
         }
+        if (target == Blocks.AIR)
+        {
+            return null;
+        }
 
-        final TargetTextures textures = this.targetTextures.computeIfAbsent(target, MateriallyTexturedItemModel::loadTargetTextures);
+        final TargetTextures textures = targetTextures(target);
+        if (textures == null)
+        {
+            incomplete[0] = true;
+            return source;
+        }
         final TargetSprite targetSprite = textures.forDirection(source.direction());
         if (targetSprite == null)
         {
@@ -240,7 +272,18 @@ public final class MateriallyTexturedItemModel implements ItemModel
             .toBakedQuad();
     }
 
+    /**
+     * The target block's textures, cached for this bake. A failed load is not cached (the next frame retries), so an
+     * early-reload hiccup cannot leave a material untextured until the next resource reload.
+     */
+    @Nullable
+    private TargetTextures targetTextures(final Block target)
+    {
+        return this.targetTextures.computeIfAbsent(target, MateriallyTexturedItemModel::loadTargetTextures);
+    }
+
     @SuppressWarnings("deprecation")
+    @Nullable
     private static TargetTextures loadTargetTextures(final Block block)
     {
         try
@@ -276,11 +319,15 @@ public final class MateriallyTexturedItemModel implements ItemModel
             final Material.Baked particle = model.particleMaterial();
             return new TargetTextures(byDirection, unculled, particle);
         }
-        catch (final RuntimeException ignored)
+        catch (final RuntimeException e)
         {
-            // A target can be unavailable during an early resource reload. The
-            // source quad is safer than dropping the entire item.
-            return TargetTextures.EMPTY;
+            // A target can be unavailable during an early resource reload. Keep the
+            // source quad for now and return null so computeIfAbsent stores nothing.
+            if (LOGGED_LOAD_FAILURES.add(block))
+            {
+                DomumOrnamentum.LOGGER.warn("Could not load textures of {} for a materially textured item; retrying", block, e);
+            }
+            return null;
         }
     }
 
@@ -304,8 +351,6 @@ public final class MateriallyTexturedItemModel implements ItemModel
         Material.@Nullable Baked particleMaterial
     )
     {
-        private static final TargetTextures EMPTY = new TargetTextures(Map.of(), null, null);
-
         @Nullable
         private TargetSprite forDirection(final Direction direction)
         {
