@@ -191,7 +191,17 @@ public class GlobalTagProvider extends BlockTagsProvider
             Blocks.TUFF_BRICKS,
             Blocks.CHISELED_TUFF,
             Blocks.CHISELED_TUFF_BRICKS,
-            Blocks.POLISHED_TUFF
+            Blocks.POLISHED_TUFF,
+            Blocks.CINNABAR,
+            Blocks.POLISHED_CINNABAR,
+            Blocks.CINNABAR_BRICKS,
+            Blocks.CHISELED_CINNABAR,
+            Blocks.SULFUR,
+            Blocks.POLISHED_SULFUR,
+            Blocks.SULFUR_BRICKS,
+            Blocks.CHISELED_SULFUR,
+            Blocks.RESIN_BRICKS,
+            Blocks.CHISELED_RESIN_BRICKS
         )
           .addTags(
             ModTags.EXTRA_BLOCKS,
