@@ -239,5 +239,7 @@
   "itemGroup.domum_ornamentum.slabs": "DO - Slabs",
   "itemGroup.domum_ornamentum.stairs": "DO - Stairs",
   "itemGroup.domum_ornamentum.timber_frames": "DO - Framed Blocks",
-  "itemGroup.domum_ornamentum.walls": "DO - Walls"
+  "itemGroup.domum_ornamentum.walls": "DO - Walls",
+  "tag.item.domum_ornamentum.brick_items": "Domum Ornamentum Bricks",
+  "tag.item.domum_ornamentum.extra_block_items": "Domum Ornamentum Extra Blocks"
 }

@@ -1,6 +1,5 @@
 package com.ldtteam.domumornamentum.event.handlers;
 
-import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import com.ldtteam.domumornamentum.datagen.DatagenContext;
 import com.ldtteam.domumornamentum.datagen.allbrick.AllBrickBlockStateProvider;
@@ -74,6 +73,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.data.event.GatherDataRegistryEntriesEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -230,15 +230,21 @@ public class ModBusEventHandler
         //Global
         event.getGenerator().addProvider(true, new GlobalLanguageProvider(event.getGenerator()));
 
-        // MC 26.3: recipes, recipe advancements and loot tables are reloadable registry
-        // entries; they are generated through one RegistrySetBuilder bootstrap.
-        final RegistrySetBuilder reloadable = new RegistrySetBuilder()
-            .add(Registries.LOOT_TABLE, new GlobalLootTableProvider())
+    }
+
+    /**
+     * MC 26.3: recipes, recipe advancements and loot tables are reloadable registry entries.
+     * NeoForge 26.3.0.89 gathers them through {@link GatherDataRegistryEntriesEvent}
+     * (it replaced {@code GatherDataEvent#createReloadableRegistryObjects}).
+     */
+    @SubscribeEvent
+    public static void dataRegistryEntries(final GatherDataRegistryEntriesEvent event)
+    {
+        event.add(Registries.LOOT_TABLE, new GlobalLootTableProvider())
             .add(DomumRecipeProvider.bootstrap(ExtraRecipeProvider::new))
             .add(DomumRecipeProvider.bootstrap(BrickRecipeProvider::new))
             .add(DomumRecipeProvider.bootstrap(FloatingCarpetRecipeProvider::new))
             .add(DomumRecipeProvider.bootstrap(GlobalRecipeProvider::new))
             .add(DomumRecipeProvider.bootstrap(MateriallyTexturedBlockRecipeProvider::new));
-        event.createReloadableRegistryObjects(reloadable);
     }
 }
